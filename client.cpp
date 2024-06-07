@@ -637,6 +637,61 @@ void fifo_cb(struct ev_loop *loop, struct ev_io *watcher, int revents) {
         mylog(log_info, "unknown command\n");
     }
 }
+void state_udp_accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revents){
+    mylog(log_debug,"state_udp_accept_cb");
+    conn_info_t &conn_info = *((conn_info_t *)watcher->data);
+    int recv_len;
+    char buf[buf_len];
+    address_t::storage_t udp_new_addr_in = {{0}};
+    socklen_t udp_new_addr_len = sizeof(address_t::storage_t);
+    if ((recv_len = recvfrom(state_fd, buf, max_data_len + 1, 0,
+                             (struct sockaddr *)&udp_new_addr_in, &udp_new_addr_len)) == -1) {
+        mylog(log_debug, "state_fd recv_from error,%s\n", get_sock_error());
+        return ;
+    };
+
+    if (recv_len == max_data_len + 1) {
+        mylog(log_warn, "state_fd huge packet, data_len > %d,dropped\n", max_data_len);
+        return ;
+    }
+
+    if (recv_len >= mtu_warn) {
+        mylog(log_warn, "state_fd huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ", recv_len, mtu_warn);
+    }
+
+    address_t tmp_addr;
+    tmp_addr.from_sockaddr((sockaddr *)&udp_new_addr_in, udp_new_addr_len);
+    char send_buf[buf_len];
+    string client_current_state;
+    switch (conn_info.state.client_current_state){
+        case client_ready:
+        client_current_state="client_ready";
+        break;
+        case client_idle:
+        client_current_state="client_idle";
+        break;
+        case client_tcp_handshake:
+        client_current_state="client_tcp_handshake";
+        break;
+        case client_handshake1:
+        client_current_state="client_handshake1";
+        break;
+        case client_handshake2:
+        client_current_state="client_handshake2";
+        break;
+        case client_tcp_handshake_dummy:
+        client_current_state="client_tcp_handshake_dummy";
+        break;
+        default:
+        client_current_state="not ready";
+    }
+    ssize_t send_bytes=sendto(state_fd,client_current_state.c_str(),client_current_state.size(),0,(struct sockaddr *)&tmp_addr.inner,tmp_addr.get_len());
+    if (send_bytes < 0){
+        mylog(log_warn, "sento returned %d,%s,%02x,%s\n", send_bytes, get_sock_error(), int(tmp_addr.get_type()), tmp_addr.get_str());
+    }
+    
+}
+
 int client_event_loop() {
     char buf[buf_len];
 
@@ -815,6 +870,21 @@ int client_event_loop() {
     }
     setnonblocking(udp_fd);
 
+#ifdef UDP2RAW_MP
+    if (use_state_addr==1){
+        state_fd =socket(state_addr.get_type(),SOCK_DGRAM, IPPROTO_UDP);
+        set_buf_size(state_fd, socket_buf_size);
+
+    if (::bind(state_fd, (struct sockaddr *)&state_addr.inner, state_addr.get_len()) == -1) {
+        mylog(log_fatal, "state_fd socket bind error\n");
+        // perror("socket bind error");
+        myexit(1);
+    }
+    setnonblocking(state_fd);
+
+    }
+#endif
+
     // epollfd = epoll_create1(0);
 
     // const int max_events = 4096;
@@ -865,6 +935,14 @@ int client_event_loop() {
     ev_async_start(loop, &async_watcher);
 
     init_raw_socket();  // must be put after dev detection
+    struct ev_io state_fd_accept_watcher;
+    if (use_state_addr){
+        mylog(log_debug,"use_state_addr\n");
+    
+    state_fd_accept_watcher.data = &conn_info;
+    ev_io_init(&state_fd_accept_watcher, state_udp_accept_cb, state_fd, EV_READ);
+    ev_io_start(loop, &state_fd_accept_watcher);
+    }
 #endif
 
     // set_timer(epollfd,timer_fd);
@@ -889,7 +967,7 @@ int client_event_loop() {
 
         mylog(log_info, "fifo_file=%s\n", fifo_file);
     }
-
+    mylog(log_debug,"?\n");
     ev_run(loop, 0);
     return 0;
 }

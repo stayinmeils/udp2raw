@@ -15,7 +15,7 @@
 int hb_mode = 1;
 int hb_len = 1200;
 char hb_buf[buf_len];
-
+int use_state_addr =0;
 int mtu_warn = 1375;  // if a packet larger than mtu warn is receviced,there will be a warning
 
 int max_rst_to_show = 15;
@@ -32,7 +32,7 @@ fd_manager_t fd_manager;
 // char local_ip[100]="0.0.0.0", remote_ip[100]="255.255.255.255",source_ip[100]="0.0.0.0";//local_ip is for -l option,remote_ip for -r option,source for --source-ip
 // u32_t local_ip_uint32,remote_ip_uint32,source_ip_uint32;//convert from last line.
 // int local_port = -1, remote_port=-1,source_port=0;//similiar to local_ip  remote_ip,buf for port.source_port=0 indicates --source-port is not enabled
-address_t local_addr, remote_addr, source_addr;
+address_t local_addr, remote_addr, source_addr, state_addr;
 
 my_ip_t bind_addr;
 
@@ -45,6 +45,7 @@ int force_source_port = 0;
 my_id_t const_id = 0;  // an id used for connection recovery,its generated randomly,it never change since its generated
 
 int udp_fd = -1;   // for client only. client use this fd to listen and handle udp connection
+int state_fd = -1;
 int bind_fd = -1;  // bind only,never send or recv.  its just a dummy fd for bind,so that other program wont occupy the same port
 #ifdef UDP2RAW_LINUX
 int epollfd = -1;   // fd for epoll
@@ -132,6 +133,7 @@ void print_help() {
     printf("libnet is disabled at compile time\n");
     printf("\n");
 #endif
+    printf("    --state-addr                          udp addr used to get state\n");
 #endif
     printf("usage:\n");
     printf("    run as client : ./this_program -c -l local_listen_ip:local_port -r server_address:server_port  [options]\n");
@@ -294,6 +296,7 @@ void process_arg(int argc, char *argv[])  // process all options
 #ifdef UDP2RAW_MP
             {"pcap-send", no_argument, 0, 1},
             {"no-pcap-mutex", no_argument, 0, 1},
+            {"state-addr", required_argument, 0, 1},
 #endif
             {"fix-gro", no_argument, 0, 1},
             {NULL, 0, 0, 0}};
@@ -669,6 +672,12 @@ void process_arg(int argc, char *argv[])  // process all options
                 } else if (strcmp(long_options[option_index].name, "no-pcap-mutex") == 0) {
                     use_pcap_mutex = 0;
                     mylog(log_warn, "--no-pcap-mutex enabled, we will assume the underlying pcap calls are threadsafe\n");
+                }else if (strcmp(long_options[option_index].name, "state-addr") == 0) {
+                use_state_addr=1;
+                state_addr.from_str(optarg);
+                if (state_addr.get_port() == 22) {
+                    mylog(log_fatal, "port 22 not allowed\n");
+                    myexit(-1);}
                 }
 #endif
                 else if (strcmp(long_options[option_index].name, "easy-tcp") == 0) {

@@ -31,6 +31,7 @@
 #define NO_LIBNET
 #endif
 
+#define UDP2RAW_MP
 #if defined(UDP2RAW_MP)
 const int is_udp2raw_mp = 1;
 #if !defined(__CYGWIN__) && !defined(__MINGW32__)

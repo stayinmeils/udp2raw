@@ -88,7 +88,7 @@ union current_state_t {
 // extern u32_t local_ip_uint32,remote_ip_uint32,source_ip_uint32;//convert from last line.
 // extern int local_port , remote_port,source_port;//similiar to local_ip  remote_ip,buf for port.source_port=0 indicates --source-port is not enabled
 
-extern address_t local_addr, remote_addr, source_addr;
+extern address_t local_addr, remote_addr, source_addr ,state_addr;
 
 extern my_ip_t bind_addr;
 
@@ -99,7 +99,9 @@ extern int source_port;
 
 extern my_id_t const_id;  // an id used for connection recovery,its generated randomly,it never change since its generated
 
+extern int use_state_addr;
 extern int udp_fd;                 // for client only. client use this fd to listen and handle udp connection
+extern int state_fd;
 extern int bind_fd;                // bind only,never send or recv.  its just a dummy fd for bind,so that other program wont occupy the same port
 extern int epollfd;                // fd for epoll
 extern int timer_fd;               // the general timer fd for client and server.for server this is not the only timer find,every connection has a timer fd.
