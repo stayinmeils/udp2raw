@@ -881,7 +881,6 @@ int client_event_loop() {
         myexit(1);
     }
     setnonblocking(state_fd);
-
     }
 #endif
 

@@ -115,6 +115,8 @@ extern int auto_add_iptables_rule;      // if -a is set
 extern int generate_iptables_rule;      // if -g is set
 extern int generate_iptables_rule_add;  // if --gen-add is set
 extern int retry_on_error;
+extern int use_log_path;
+extern char log_path[1000];
 const int retry_on_error_interval = 10;
 
 extern int debug_resend;  // debug only

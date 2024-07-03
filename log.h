@@ -39,7 +39,22 @@ extern int enable_log_color;
 #endif
 
 //#define mylog(__first_argu__dummy_abcde__,...) {;}
-
+class Logger{
+    public:
+    static Logger& GetInstance();
+    FILE* getlogfile();
+private:
+    Logger(const std::string& baseFilename);
+    ~Logger();
+    Logger(const Logger &logger) = delete;
+    const Logger &operator=(const Logger &logger) = delete;
+    FILE* file = nullptr;
+    std::string baseFilename;
+    std::string currentLogDate;
+    std::string getCurrentDate();
+    void openLogFile();
+    void closeLogFile();
+};
 void log0(const char* file, const char* function, int line, int level, const char* str, ...);
 
 void log_bare(int level, const char* str, ...);

@@ -60,7 +60,6 @@ int anti_replay_t::is_vaild(u64_t seq) {
 
     return 0;  // for complier check
 }
-
 void conn_info_t::recover(const conn_info_t &conn_info) {
     raw_info = conn_info.raw_info;
 
@@ -87,7 +86,6 @@ void conn_info_t::re_init() {
         state.client_current_state = client_idle;
     last_state_time = 0;
     oppsite_const_id = 0;
-
     timer_fd64 = 0;
 
     my_roller = 0;
@@ -146,6 +144,7 @@ conn_manager_t::conn_manager_t() {
     const_id_mp.reserve(10007);
     // udp_fd_mp.reserve(100007);
     last_clear_time = 0;
+    
     // current_ready_ip=0;
     // current_ready_port=0;
 }

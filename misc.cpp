@@ -17,7 +17,7 @@ int hb_len = 1200;
 char hb_buf[buf_len];
 int use_state_addr =0;
 int mtu_warn = 1375;  // if a packet larger than mtu warn is receviced,there will be a warning
-
+int use_log_path =0;
 int max_rst_to_show = 15;
 
 int max_rst_allowed = -1;
@@ -69,6 +69,8 @@ char key_string[1000] = "secret key";  // -k option
 
 char fifo_file[1000] = "";
 
+char log_path[1000]="";
+
 int clear_iptables = 0;
 int wait_xtables_lock = 0;
 #ifdef UDP2RAW_LINUX
@@ -95,6 +97,7 @@ int socket_buf_size = 1024 * 1024;
 int process_lower_level_arg()  // handle --lower-level option
 {
     lower_level = 1;
+
     if (strcmp(optarg, "auto") == 0) {
         return 0;
     }
@@ -123,17 +126,16 @@ int process_lower_level_arg()  // handle --lower-level option
 void print_help() {
     char git_version_buf[100] = {0};
     strncpy(git_version_buf, gitversion, 10);
-    printf("udp2raw-tunnel\n");
-    printf("git version:%s    ", git_version_buf);
-    printf("build date:%s %s\n", __DATE__, __TIME__);
-    printf("repository: https://github.com/wangyu-/udp2raw-tunnel\n");
-    printf("\n");
+    // printf("udp2raw-tunnel\n");
+    // printf("git version:%s    ", git_version_buf);
+    // printf("build date:%s %s\n", __DATE__, __TIME__);
+    // printf("repository: https://github.com/wangyu-/udp2raw-tunnel\n");
+    // printf("\n");
 #ifdef UDP2RAW_MP
 #ifdef NO_LIBNET
     printf("libnet is disabled at compile time\n");
     printf("\n");
 #endif
-    printf("    --state-addr                          udp addr used to get state\n");
 #endif
     printf("usage:\n");
     printf("    run as client : ./this_program -c -l local_listen_ip:local_port -r server_address:server_port  [options]\n");
@@ -194,6 +196,10 @@ void print_help() {
     printf("    --clear                               clear any iptables rules added by this program.overrides everything\n");
     printf("    --retry-on-error                      retry on error, allow to start udp2raw before network is initialized\n");
     printf("    -h,--help                             print this help message\n");
+#ifdef UDP2RAW_MP
+    printf("    --state-addr          <string>        udp addr used to get state\n");
+#endif
+    printf("    --log-path            <string>        write log in given path\n");
     // printf("common options,these options must be same on both side\n");
 }
 
@@ -299,6 +305,7 @@ void process_arg(int argc, char *argv[])  // process all options
             {"state-addr", required_argument, 0, 1},
 #endif
             {"fix-gro", no_argument, 0, 1},
+            {"log-path",required_argument,0,1},
             {NULL, 0, 0, 0}};
 
     process_log_level(argc, argv);
@@ -686,6 +693,10 @@ void process_arg(int argc, char *argv[])  // process all options
                 } else if (strcmp(long_options[option_index].name, "fix-gro") == 0) {
                     mylog(log_info, "--fix-gro enabled\n");
                     g_fix_gro = 1;
+                }else if (strcmp(long_options[option_index].name, "log-path") == 0){
+                    mylog(log_info, "--log-path %s enabled\n",optarg);
+                    use_log_path=1;
+                    strcpy(log_path,optarg);
                 } else {
                     mylog(log_warn, "ignored unknown long option ,option_index:%d code:<%x>\n", option_index, optopt);
                 }
