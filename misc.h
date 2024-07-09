@@ -109,6 +109,8 @@ extern int fail_time_counter;      // determine if the max_fail_time is reached
 extern int epoll_trigger_counter;  // for debug only
 extern int debug_flag;             // for debug only
 
+extern int use_heartbeat;
+extern int heartbeat_status;
 extern int simple_rule;                 // deprecated.
 extern int keep_rule;                   // whether to monitor the iptables rule periodly,re-add if losted
 extern int auto_add_iptables_rule;      // if -a is set

@@ -16,6 +16,7 @@ int hb_mode = 1;
 int hb_len = 1200;
 char hb_buf[buf_len];
 int use_state_addr =0;
+int heartbeat_status=0;
 int mtu_warn = 1375;  // if a packet larger than mtu warn is receviced,there will be a warning
 int use_log_path =0;
 int max_rst_to_show = 15;
@@ -23,7 +24,7 @@ int max_rst_to_show = 15;
 int max_rst_allowed = -1;
 
 int enable_dns_resolve = 0;
-
+int use_heartbeat=0;
 int ttl_value = 64;
 
 fd_manager_t fd_manager;
@@ -685,6 +686,9 @@ void process_arg(int argc, char *argv[])  // process all options
                 if (state_addr.get_port() == 22) {
                     mylog(log_fatal, "port 22 not allowed\n");
                     myexit(-1);}
+                }else if (strcmp(long_options[option_index].name,"heartbeat")==0){
+                    use_heartbeat=1;
+                    mylog(log_warn, "--heartbeat enabled\n");
                 }
 #endif
                 else if (strcmp(long_options[option_index].name, "easy-tcp") == 0) {

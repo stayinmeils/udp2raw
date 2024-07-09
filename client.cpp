@@ -26,11 +26,8 @@ int client_on_timer(conn_info_t &conn_info)  // for client. called when a timer 
     raw_info_t &raw_info = conn_info.raw_info;
     conn_info.blob->conv_manager.c.clear_inactive();
     mylog(log_trace, "timer!\n");
-
     mylog(log_trace, "roller my %d,oppsite %d,%lld\n", int(conn_info.my_roller), int(conn_info.oppsite_roller), conn_info.last_oppsite_roller_time);
-
     mylog(log_trace, "<client_on_timer,send_info.ts_ack= %u>\n", send_info.ts_ack);
-
 #ifdef UDP2RAW_MP
     // mylog(log_debug,"pcap cnt :%d\n",pcap_cnt);
     if (send_with_pcap && !pcap_header_captured) {
@@ -86,6 +83,15 @@ int client_on_timer(conn_info_t &conn_info)  // for client. called when a timer 
         mylog(log_info, "waiting for a use-able packet to be captured\n");
 
         return 0;
+    }
+
+    if(use_heartbeat){
+        if(heartbeat_status==2){
+            mylog(log_warn,"Not getting a heartbeat from Kit's client,exit");
+            exit(1);
+        }else if(heartbeat_status==1){
+            heartbeat_status=2;
+        }
     }
 #endif
     if (raw_info.disabled) {
@@ -659,6 +665,9 @@ void state_udp_accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revent
         mylog(log_warn, "state_fd huge packet,data len=%d (>=%d).strongly suggested to set a smaller mtu at upper level,to get rid of this warn\n ", recv_len, mtu_warn);
     }
 
+    if(use_heartbeat){
+        heartbeat_status=1;
+    }
     address_t tmp_addr;
     tmp_addr.from_sockaddr((sockaddr *)&udp_new_addr_in, udp_new_addr_len);
     char send_buf[buf_len];
