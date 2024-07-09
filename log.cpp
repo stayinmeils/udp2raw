@@ -123,7 +123,7 @@ void log_bare(int level, const char* str, ...) {
         va_end(vlist);
         fflush(logFile);
     }else{
-         if (enable_log_color)
+        if (enable_log_color)
             printf("%s", log_color[level]);
         va_list vlist;
         va_start(vlist, str);

@@ -86,11 +86,11 @@ int client_on_timer(conn_info_t &conn_info)  // for client. called when a timer 
     }
 
     if(use_heartbeat){
-        if(heartbeat_status==2){
+        if(heartbeat_status==4){
             mylog(log_warn,"Not getting a heartbeat from Kit's client,exit");
             exit(1);
-        }else if(heartbeat_status==1){
-            heartbeat_status=2;
+        }else if(heartbeat_status>=1){
+            heartbeat_status++;
         }
     }
 #endif

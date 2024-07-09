@@ -199,6 +199,7 @@ void print_help() {
     printf("    -h,--help                             print this help message\n");
 #ifdef UDP2RAW_MP
     printf("    --state-addr          <string>        udp addr used to get state\n");
+    printf("    --heartbeat                           use state-addr to recive vpn client heartbeat");
 #endif
     printf("    --log-path            <string>        write log in given path\n");
     // printf("common options,these options must be same on both side\n");
@@ -304,6 +305,7 @@ void process_arg(int argc, char *argv[])  // process all options
             {"pcap-send", no_argument, 0, 1},
             {"no-pcap-mutex", no_argument, 0, 1},
             {"state-addr", required_argument, 0, 1},
+            {"heartbeat",no_argument,0,1},
 #endif
             {"fix-gro", no_argument, 0, 1},
             {"log-path",required_argument,0,1},
