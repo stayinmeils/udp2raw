@@ -48,6 +48,7 @@ const i32_t max_fail_time = 0;  // disable
 const u32_t heartbeat_interval = 600;  // ms
 
 const u32_t timer_interval = 400;  // ms. this should be smaller than heartbeat_interval and retry interval;
+const u32_t heartbeat_timer_interval=2000;
 
 const uint32_t conv_timeout = 180000;  // ms. 120 second
 // const u32_t conv_timeout=30000; //for test

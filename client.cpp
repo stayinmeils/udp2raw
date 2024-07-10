@@ -19,6 +19,7 @@ extern pcap_t *pcap_handle;
 extern int pcap_captured_full_len;
 #endif
 
+
 int client_on_timer(conn_info_t &conn_info)  // for client. called when a timer is ready in epoll
 {
     packet_info_t &send_info = conn_info.raw_info.send_info;
@@ -83,15 +84,6 @@ int client_on_timer(conn_info_t &conn_info)  // for client. called when a timer 
         mylog(log_info, "waiting for a use-able packet to be captured\n");
 
         return 0;
-    }
-
-    if(use_heartbeat){
-        if(heartbeat_status==4){
-            mylog(log_warn,"Not getting a heartbeat from Kit's client,exit");
-            exit(1);
-        }else if(heartbeat_status>=1){
-            heartbeat_status++;
-        }
     }
 #endif
     if (raw_info.disabled) {
@@ -615,7 +607,21 @@ void async_cb(struct ev_loop *loop, struct ev_async *watcher, int revents) {
         client_on_raw_recv(conn_info);
     }
 }
+
+void heartbeat_timer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents){
+    mylog(log_debug, "      heartbeat_timer!\n");
+    if(use_heartbeat){
+        if(heartbeat_status==2){
+            mylog(log_warn,"Not getting a heartbeat from Kit's client,exit");
+            exit(1);
+        }else if(heartbeat_status==1){
+            heartbeat_status++;
+            mylog(log_debug,"heartbeat_status:%d\n",heartbeat_status);
+        }
+    }
+}
 #endif
+
 void clear_timer_cb(struct ev_loop *loop, struct ev_timer *watcher, int revents) {
     conn_info_t &conn_info = *((conn_info_t *)watcher->data);
     client_on_timer(conn_info);
@@ -667,6 +673,7 @@ void state_udp_accept_cb(struct ev_loop *loop, struct ev_io *watcher, int revent
 
     if(use_heartbeat){
         heartbeat_status=1;
+        mylog(log_debug,"    heartbeat_status:%d\n",heartbeat_status);
     }
     address_t tmp_addr;
     tmp_addr.from_sockaddr((sockaddr *)&udp_new_addr_in, udp_new_addr_len);
@@ -946,10 +953,18 @@ int client_event_loop() {
     struct ev_io state_fd_accept_watcher;
     if (use_state_addr){
         mylog(log_debug,"use_state_addr\n");
-    
-    state_fd_accept_watcher.data = &conn_info;
-    ev_io_init(&state_fd_accept_watcher, state_udp_accept_cb, state_fd, EV_READ);
-    ev_io_start(loop, &state_fd_accept_watcher);
+        state_fd_accept_watcher.data = &conn_info;
+        ev_io_init(&state_fd_accept_watcher, state_udp_accept_cb, state_fd, EV_READ);
+        ev_io_start(loop, &state_fd_accept_watcher);
+    }
+
+    mylog(log_debug,"use_heartbeat:%d\n",use_heartbeat);
+    struct ev_timer heartbeat_timer;
+    if(use_heartbeat){
+        mylog(log_debug,"use_heartbeat\n");
+        heartbeat_timer.data = &conn_info;
+        ev_timer_init(&heartbeat_timer,heartbeat_timer_cb, 0,heartbeat_timer_interval / 1000.0);
+        ev_timer_start(loop, &heartbeat_timer);
     }
 #endif
 
